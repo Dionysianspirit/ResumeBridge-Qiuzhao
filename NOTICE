@@ -1,0 +1,23 @@
+ResumeBridge-Qiuzhao
+Copyright (c) 2026 Dionysianspirit
+
+This project is a local-first campus-recruiting companion derived from:
+
+- ResumeBridge by xiaocheng223 (MIT)
+  https://github.com/xiaocheng223/ResumeBridge
+- OpenJobAutofill by Br1an67 (MIT)
+  https://github.com/Br1an67/OpenJobAutofill
+
+The original copyright and license notices are retained in LICENSE.
+Storage keys remain compatible with ResumeBridge / OpenJobAutofill so
+existing local profile backups can still be imported.
+
+The bundled job catalog is a 2026-09-06 snapshot compiled from community
+campus-recruiting lists (commonly known as 土豆投递表 and 互联派).
+It is provided as a convenience, not as an official or continuously
+updated dataset. Company names, application URLs, referral flags and
+deadlines must be verified on official recruiting pages before applying.
+
+Personal matching notes were removed from the published catalog.
+Application progress, resumes and API keys are stored only in the
+current browser's extension storage and are not part of this repository.

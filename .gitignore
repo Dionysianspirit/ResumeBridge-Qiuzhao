@@ -1,0 +1,21 @@
+.DS_Store
+Thumbs.db
+*.log
+
+node_modules/
+dist/
+build/
+coverage/
+backups/
+__pycache__/
+*.py[cod]
+.playwright-cli/
+output/playwright/
+
+.env
+.env.*
+!.env.example
+
+# Keep the published catalog; ignore accidental local dumps
+*.local.json
+*.local.xlsx

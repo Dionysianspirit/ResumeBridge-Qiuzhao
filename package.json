@@ -1,0 +1,19 @@
+{
+  "name": "resumebridge-qiuzhao",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Local-first Chrome/Edge extension for campus recruiting: one local resume, assisted form filling, and a 2026 autumn job catalog.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dionysianspirit/ResumeBridge-Qiuzhao.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Dionysianspirit/ResumeBridge-Qiuzhao/issues"
+  },
+  "homepage": "https://github.com/Dionysianspirit/ResumeBridge-Qiuzhao",
+  "scripts": {
+    "check": "node --check src/background.js && node --check src/content.js && node --check src/options.js && node --check src/popup.js && node --check src/tracker.js && node --check src/job-tracker.js && node --check src/date-utils.js && node --check src/project-utils.js && node --check src/profile-utils.js && node --check src/safety-policy.js && node --check src/message-policy.js && node --check src/ai-privacy.js && node --check src/catalog.js && node --check src/catalog-model.js && node --check scripts/package-local.js",
+    "package": "node scripts/package-local.js"
+  },
+  "license": "MIT"
+}

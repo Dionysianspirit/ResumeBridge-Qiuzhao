@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "ResumeBridge 履历桥 - 秋招助手",
+  "version": "0.2.0",
+  "version_name": "0.2.0-local.1",
+  "description": "秋招信息总表、未投与已投追踪、多简历切换和网申表单填写。",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_title": "履历桥 ResumeBridge",
+    "default_popup": "src/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "src/options.html"
+}
