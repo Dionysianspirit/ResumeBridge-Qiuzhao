@@ -165,6 +165,8 @@ async function handleMessage(message, sender = {}) {
       return queueJobWrite(() => deleteJobApplication(message.payload || {}));
     case "OJAF_CLEAR_JOB_APPLICATIONS":
       return queueJobWrite(clearJobApplications);
+    case "OJAF_GET_CATALOG":
+      return getCatalogPack();
     case "OJAF_GET_CATALOG_STATE":
       await jobWriteQueue;
       return getCatalogState();
@@ -174,6 +176,10 @@ async function handleMessage(message, sender = {}) {
       return queueJobWrite(() => openCatalogEntry(message.payload || {}));
     case "OJAF_GET_CATALOG_CONTEXT":
       return getCatalogContext(message.payload || {});
+    case "OJAF_IMPORT_CATALOG":
+      return importCatalog(message.payload || {});
+    case "OJAF_RESET_CATALOG":
+      return resetCatalog();
     case "OJAF_EXPORT_TRACKING_BACKUP":
       await jobWriteQueue;
       return exportTrackingBackup();
@@ -388,17 +394,77 @@ function queueJobWrite(action) {
   return result;
 }
 
-async function loadCatalog() {
+const CATALOG_DB_NAME = "ResumeBridgeCatalog";
+const CATALOG_STORE = "data";
+const CATALOG_OVERRIDE_KEY = "override";
+
+function openCatalogDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(CATALOG_DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(CATALOG_STORE)) db.createObjectStore(CATALOG_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("无法打开总表存储"));
+  });
+}
+
+function idbRequest(mode, run) {
+  return openCatalogDb().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(CATALOG_STORE, mode);
+    const request = run(tx.objectStore(CATALOG_STORE));
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    tx.oncomplete = () => db.close();
+  }));
+}
+
+async function loadCatalogPack() {
   if (!catalogPromise) {
     catalogPromise = (async () => {
+      const override = await idbRequest("readonly", (store) => store.get(CATALOG_OVERRIDE_KEY));
+      if (override?.catalog) {
+        return {
+          catalog: globalThis.ResumeBridgeCatalog.normalizeCatalog(override.catalog, { stripPersonal: true }),
+          source: "imported"
+        };
+      }
       const response = await fetch(chrome.runtime.getURL("data/catalog.json"));
       if (!response.ok) throw new Error("招聘清单未加载，请检查扩展安装目录。");
-      const catalog = await response.json();
-      if (catalog.schemaVersion !== 1 || !Array.isArray(catalog.entries)) throw new Error("招聘清单格式不正确。");
-      return catalog;
+      const catalog = globalThis.ResumeBridgeCatalog.normalizeCatalog(await response.json(), { stripPersonal: true });
+      return { catalog, source: "bundled" };
     })().catch((error) => { catalogPromise = null; throw error; });
   }
   return catalogPromise;
+}
+
+async function loadCatalog() {
+  return (await loadCatalogPack()).catalog;
+}
+
+async function getCatalogPack() {
+  const packed = await loadCatalogPack();
+  return {
+    catalog: packed.catalog,
+    source: packed.source,
+    asOf: packed.catalog.asOf,
+    entryCount: packed.catalog.entries.length,
+    counts: packed.catalog.counts || {}
+  };
+}
+
+async function importCatalog(payload) {
+  const catalog = globalThis.ResumeBridgeCatalog.normalizeCatalog(payload.catalog, { stripPersonal: true });
+  await idbRequest("readwrite", (store) => store.put({ catalog, importedAt: new Date().toISOString() }, CATALOG_OVERRIDE_KEY));
+  catalogPromise = Promise.resolve({ catalog, source: "imported" });
+  return { source: "imported", asOf: catalog.asOf, entryCount: catalog.entries.length, counts: catalog.counts || {} };
+}
+
+async function resetCatalog() {
+  await idbRequest("readwrite", (store) => store.delete(CATALOG_OVERRIDE_KEY));
+  catalogPromise = null;
+  return getCatalogPack();
 }
 
 async function requireCatalogEntry(id) {

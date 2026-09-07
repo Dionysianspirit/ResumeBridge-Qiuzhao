@@ -47,10 +47,20 @@ ResumeBridge-Qiuzhao 是一个面向校园招聘网申的 Chrome / Edge 扩展�
 
 随仓库送出的文件：
 
-- [`data/catalog.json`](data/catalog.json)：插件运行时读取的清单
+- [`data/catalog.json`](data/catalog.json)：插件默认读取的清单
 - [`data/2026秋招投递总表-20260906.xlsx`](data/2026秋招投递总表-20260906.xlsx)：同一份快照的表格，方便用 Excel 打开或自行筛选
 
-数据来自社区投递表（土豆投递表、互联派）的 2026-09-06 快照，公开前已去掉个人「挂钩提示」。公司名、岗位、投递链接、档位、截止日期等招聘信息保留，方便后来的同学接着用。
+默认用这份内置总表。也可以在总表页「数据备份 → 导入招聘总表」换成自己的 `catalog.json`；不需要时再「恢复内置总表」。
+
+Excel 需要先转成 JSON：
+
+```powershell
+python scripts/import-catalog.py path\to\你的投递表.xlsx data\my-catalog.json
+```
+
+转换和插件导入时都会自动清空「挂钩提示」「软岗分」。这两列是按某个人经历写的投递话术，不是岗位本身。公司名、岗位、链接、档位、截止日期会保留。
+
+数据来自社区投递表（土豆投递表、互联派）的 2026-09-06 快照。
 
 请把这份表当成**起点**，不要当成官方实时招聘库：
 
@@ -118,13 +128,13 @@ npm run check     # 检查扩展脚本语法
 npm run package   # 生成 dist/chrome-版本号，已有目录时拒绝覆盖
 ```
 
-重新导入投递表（会保留每一行，并拒绝覆盖已有输出）：
+把 Excel 投递表转成插件能读的 JSON（输出文件已存在时会拒绝覆盖）：
 
 ```powershell
-python scripts/import-catalog.py path\to\workbook.xlsx data\catalog.json
+python scripts/import-catalog.py path\to\workbook.xlsx data\my-catalog.json
 ```
 
-公开前请自行清空个人备注列。本仓库发布稿已经去掉「挂钩提示」。
+脚本会保留每一行，并清空挂钩提示、软岗分。然后在总表页导入这个 JSON，不必替换仓库里的内置文件。
 
 ## 项目结构
 

@@ -12,7 +12,8 @@
   },
   "homepage": "https://github.com/Dionysianspirit/ResumeBridge-Qiuzhao",
   "scripts": {
-    "check": "node --check src/background.js && node --check src/content.js && node --check src/options.js && node --check src/popup.js && node --check src/tracker.js && node --check src/job-tracker.js && node --check src/date-utils.js && node --check src/project-utils.js && node --check src/profile-utils.js && node --check src/safety-policy.js && node --check src/message-policy.js && node --check src/ai-privacy.js && node --check src/catalog.js && node --check src/catalog-model.js && node --check scripts/package-local.js",
+    "check": "node --check src/background.js && node --check src/content.js && node --check src/options.js && node --check src/popup.js && node --check src/tracker.js && node --check src/job-tracker.js && node --check src/date-utils.js && node --check src/project-utils.js && node --check src/profile-utils.js && node --check src/safety-policy.js && node --check src/message-policy.js && node --check src/ai-privacy.js && node --check src/catalog.js && node --check src/catalog-model.js && node --check scripts/package-local.js && node --check tests/catalog-model.test.js",
+    "test": "node --test tests/catalog-model.test.js",
     "package": "node scripts/package-local.js"
   },
   "license": "MIT"

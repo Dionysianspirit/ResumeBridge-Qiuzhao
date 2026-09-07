@@ -60,10 +60,20 @@ async function openEntry(id) {
   catch (e) { feedback(e.message, true, $("detailDialog").open); }
 }
 function renderFields(fields) {
-  return Object.entries(fields).map(([key, value]) => {
+  return Object.entries(fields).filter(([key, value]) => !model.isHiddenCatalogField(key) && String(value ?? "").trim()).map(([key, value]) => {
     const url = model.safeWebUrl(value);
-    return `<dt>${escapeHtml(key)}</dt><dd>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(value)}</a>` : escapeHtml(value || "—")}</dd>`;
+    return `<dt>${escapeHtml(key)}</dt><dd>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(value)}</a>` : escapeHtml(value)}</dd>`;
   }).join("");
+}
+function applyCatalogPack(pack) {
+  catalog = pack.catalog;
+  $("snapshotLabel").textContent = pack.source === "imported"
+    ? `${catalog.asOf || "本地导入"} · 自己导入的总表`
+    : `${catalog.asOf} · 内置脱敏总表`;
+  const counts = catalog.counts || {};
+  $("sourceSummary").textContent = pack.source === "imported"
+    ? `当前使用你导入的清单，共 ${pack.entryCount.toLocaleString()} 条。挂钩提示和软岗分已自动清空。`
+    : `社区投递表快照：${Number(counts.activeSourceRows || pack.entryCount).toLocaleString()} 条有效来源归并为 ${Number(counts.active || pack.entryCount).toLocaleString()} 条招聘信息，本周优先 ${Number(counts.weekly || 0)} 条。`;
 }
 function showEntry(id) {
   selectedId = id; noteDirty = false;
@@ -173,14 +183,33 @@ function closeDetail() {
   if (noteDirty && !confirm("准备信息还有未保存修改，关闭会放弃这些修改。是否关闭？")) return;
   $("detailDialog").close(); selectedId = ""; noteDirty = false;
 }
+async function importCatalogFile() {
+  const file = $("catalogFile").files[0];
+  if (!file) return;
+  try {
+    if (/\.xlsx?$/i.test(file.name)) throw new Error("请先把 Excel 转成 catalog.json。仓库里的 scripts/import-catalog.py 可以转换常见的三表投递表。");
+    const parsed = JSON.parse(await file.text());
+    if (!confirm("导入后会替换当前招聘总表。挂钩提示和软岗分会自动清空。已投记录还在「全部投递记录」里，但和公司清单的对应可能对不上。继续？")) return;
+    await message("OJAF_IMPORT_CATALOG", { catalog: parsed });
+    applyCatalogPack(await message("OJAF_GET_CATALOG"));
+    page = 1; selectedId = "";
+    await loadState();
+    feedback(`已导入 ${catalog.entries.length.toLocaleString()} 条招聘信息。个人挂钩字段已清空。`);
+  } catch (e) { feedback(`导入总表失败：${e.message}`, true); }
+  finally { $("catalogFile").value = ""; }
+}
+async function resetCatalog() {
+  if (!confirm("恢复插件内置的脱敏总表？你导入的清单会从本机去掉，已投记录仍保留。")) return;
+  try {
+    applyCatalogPack(await message("OJAF_RESET_CATALOG"));
+    page = 1; selectedId = "";
+    await loadState();
+    feedback("已恢复内置脱敏总表。");
+  } catch (e) { feedback(`恢复失败：${e.message}`, true); }
+}
 async function initialize() {
   try {
-    const response = await fetch(chrome.runtime.getURL("data/catalog.json"));
-    if (!response.ok) throw new Error("未找到清单文件，请检查插件更新是否完整。");
-    catalog = await response.json();
-    if (catalog.schemaVersion !== 1 || !Array.isArray(catalog.entries)) throw new Error("清单格式不正确。");
-    $("snapshotLabel").textContent = `${catalog.asOf} 导入 · 原表信息`;
-    $("sourceSummary").textContent = `社区投递表快照：${catalog.counts.activeSourceRows.toLocaleString()} 条有效来源归并为 ${catalog.counts.active.toLocaleString()} 条招聘信息，本周优先 ${catalog.counts.weekly} 条。`;
+    applyCatalogPack(await message("OJAF_GET_CATALOG"));
     $("recordStatus").innerHTML = recordStatusOptions();
     profileLibrary = await message("OJAF_GET_PROFILE_LIBRARY");
     $("recordResume").innerHTML = '<option value="">未记录简历版本</option>' + profileLibrary.profiles.map((p) => `<option value="${escapeHtml(p.name)}"${p.id === profileLibrary.activeId ? " selected" : ""}>${escapeHtml(p.name)}</option>`).join("");
@@ -206,6 +235,8 @@ $("openResume").addEventListener("click", () => chrome.runtime.openOptionsPage()
 $("openRecords").addEventListener("click", () => chrome.tabs.create({ url: chrome.runtime.getURL("src/tracker.html") }));
 $("exportCsv").addEventListener("click", () => { if (!catalog) return; download(`秋招-${VIEW_NAMES[view]}-${model.localDateKey()}.csv`, model.exportRows(visibleRows), "text/csv;charset=utf-8"); feedback(`已导出筛选结果中的 ${visibleRows.length} 条信息，CSV 可用 Excel 打开。`); });
 $("exportBackup").addEventListener("click", () => void exportBackup()); $("importBackup").addEventListener("click", () => $("backupFile").click()); $("backupFile").addEventListener("change", () => void importBackup());
+$("importCatalog").addEventListener("click", () => $("catalogFile").click()); $("catalogFile").addEventListener("change", () => void importCatalogFile());
+$("resetCatalog").addEventListener("click", () => void resetCatalog());
 chrome.storage.onChanged.addListener((changes, area) => { if (catalog && area === "local" && (changes.jobApplications || changes.catalogNotes)) void loadState(); });
 window.addEventListener("focus", () => { if (catalog) void loadState(); });
 window.addEventListener("beforeunload", (e) => { if (noteDirty) { e.preventDefault(); e.returnValue = ""; } });

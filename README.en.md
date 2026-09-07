@@ -49,7 +49,7 @@ The snapshot date is **2026-09-06**.
 - [`data/catalog.json`](data/catalog.json) is what the extension reads
 - [`data/2026秋招投递总表-20260906.xlsx`](data/2026秋招投递总表-20260906.xlsx) is the same snapshot as a spreadsheet
 
-Sources are community campus-recruiting lists. Personal matching notes were removed before publication. Deadlines and URLs go stale; verify official pages before applying.
+The bundled snapshot is the default. You can also import your own `catalog.json` from the catalog page, or convert an Excel workbook with `scripts/import-catalog.py`. Import clears personal matching columns (`挂钩提示`, `软岗分`). Deadlines and URLs go stale; verify official pages before applying.
 
 ## Safety
 

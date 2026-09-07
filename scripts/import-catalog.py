@@ -1,4 +1,8 @@
-"""Read a community catalog workbook without modifying it; retain every source row. Personal matching notes should be cleared before publishing."""
+"""Read a community catalog workbook without modifying it; retain every source row.
+
+Personal matching columns (挂钩提示, 软岗分) are cleared in the JSON output so a
+local annotated 土豆-style workbook can be published or imported without those notes.
+"""
 import argparse
 import hashlib
 import json
@@ -88,8 +92,26 @@ counts = {
     "weekly": len(weekly),
     "mergedSourceRows": sum(len(e["sources"]) - 1 for e in entries),
 }
-result = {"schemaVersion": 1, "sourceFile": args.source.name, "sourceSha256": source_hash,
-          "asOf": "2026-09-06", "counts": counts, "entries": entries}
+PERSONAL_KEYS = ("挂钩提示", "软岗分")
+
+def strip_personal(value):
+    if isinstance(value, dict):
+        return {key: "" if key in PERSONAL_KEYS else strip_personal(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [strip_personal(item) for item in value]
+    return value
+
+safe_name = args.source.name
+if any(token in safe_name for token in ("李-", "澪", "ASUS")):
+    safe_name = "imported-catalog.json"
+result = strip_personal({
+    "schemaVersion": 1,
+    "sourceFile": safe_name,
+    "sourceSha256": source_hash,
+    "asOf": "2026-09-06",
+    "counts": counts,
+    "entries": entries,
+})
 args.destination.parent.mkdir(parents=True, exist_ok=True)
 args.destination.write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 book.close()

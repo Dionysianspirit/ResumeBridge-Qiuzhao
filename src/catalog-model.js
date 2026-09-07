@@ -93,5 +93,52 @@
       r.note.followUpDate, r.note.notes, r.entry.sources.map((s) => `${s.sheet}!${s.row}`).join("；")]);
     return "\ufeff" + data.map((r) => r.map(csvCell).join(",")).join("\r\n");
   }
-  return { localDateKey, dateNumber, deadlineInfo, safeWebUrl, isSubmitted, buildRows, filterRows, metrics, exportRows };
+  const PERSONAL_CATALOG_KEYS = ["挂钩提示", "软岗分"];
+  function isHiddenCatalogField(key) {
+    return PERSONAL_CATALOG_KEYS.includes(key);
+  }
+  function stripPersonalCatalogFields(value) {
+    if (Array.isArray(value)) {
+      for (const item of value) stripPersonalCatalogFields(item);
+      return value;
+    }
+    if (!value || typeof value !== "object") return value;
+    for (const [key, nested] of Object.entries(value)) {
+      if (isHiddenCatalogField(key)) value[key] = "";
+      else stripPersonalCatalogFields(nested);
+    }
+    return value;
+  }
+  function safeCatalogFileName(name) {
+    const base = String(name || "").replace(/\\/g, "/").split("/").pop().trim();
+    if (!base || /asus|users[/\\]|李-|澪|听月/i.test(base)) return "imported-catalog.json";
+    return base.slice(0, 180);
+  }
+  function normalizeCatalog(input, options = {}) {
+    if (!input || typeof input !== "object") throw new Error("招聘清单格式不正确。");
+    if (input.schemaVersion !== 1 || !Array.isArray(input.entries)) {
+      throw new Error("招聘清单格式不正确。需要 schemaVersion 1 的 catalog.json。");
+    }
+    if (input.entries.length === 0) throw new Error("招聘清单是空的。");
+    if (input.entries.length > 20000) throw new Error("招聘清单条目超过 20000 条。");
+    for (const entry of input.entries) {
+      if (!entry || typeof entry !== "object" || !entry.id || !entry.companyName) {
+        throw new Error("招聘清单含有缺少公司或编号的条目。");
+      }
+    }
+    const catalog = {
+      schemaVersion: 1,
+      sourceFile: safeCatalogFileName(input.sourceFile),
+      sourceSha256: String(input.sourceSha256 || "").slice(0, 64),
+      asOf: String(input.asOf || localDateKey()).slice(0, 32),
+      counts: input.counts && typeof input.counts === "object" ? input.counts : { active: input.entries.length },
+      entries: input.entries
+    };
+    if (input.attribution) catalog.attribution = input.attribution;
+    return options.stripPersonal === false ? catalog : stripPersonalCatalogFields(catalog);
+  }
+  return {
+    localDateKey, dateNumber, deadlineInfo, safeWebUrl, isSubmitted, buildRows, filterRows, metrics, exportRows,
+    PERSONAL_CATALOG_KEYS, isHiddenCatalogField, stripPersonalCatalogFields, safeCatalogFileName, normalizeCatalog
+  };
 });
