@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "sourceFile": "李-双表合并.xlsx",
+  "sourceSha256": "deadbeef",
+  "asOf": "2026-01-02",
+  "counts": {
+    "activeSourceRows": 2,
+    "active": 2,
+    "weekly": 1
+  },
+  "entries": [
+    {
+      "id": "catalog-import-test-1",
+      "companyName": "导入测试公司甲",
+      "roles": "测试岗位甲",
+      "location": "北京市",
+      "batch": "秋招",
+      "applyUrl": "https://example.com/apply-a",
+      "noticeUrl": "https://example.com/notice-a",
+      "tier": "B",
+      "tierLabel": "中",
+      "deadline": "2026-12-31",
+      "deadlineType": "日期",
+      "sourceExpired": false,
+      "weeklyRank": 1,
+      "fields": {
+        "公司名称": "导入测试公司甲",
+        "招聘岗位": "测试岗位甲",
+        "挂钩提示": "可挂径舟/B站",
+        "软岗分": "99"
+      },
+      "sources": [{ "sheet": "总筛未过期", "row": 2 }],
+      "variants": []
+    },
+    {
+      "id": "catalog-import-test-2",
+      "companyName": "导入测试公司乙",
+      "roles": "测试岗位乙",
+      "location": "上海市",
+      "batch": "秋招",
+      "applyUrl": "https://example.com/apply-b",
+      "noticeUrl": "",
+      "tier": "C",
+      "tierLabel": "稳",
+      "deadline": "招满为止",
+      "deadlineType": "招满为止",
+      "sourceExpired": false,
+      "weeklyRank": null,
+      "fields": {
+        "公司名称": "导入测试公司乙",
+        "招聘岗位": "测试岗位乙",
+        "挂钩提示": "可挂创青春+径舟",
+        "软岗分": "12"
+      },
+      "sources": [{ "sheet": "总筛未过期", "row": 3 }],
+      "variants": []
+    }
+  ]
+}
